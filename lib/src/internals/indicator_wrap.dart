@@ -43,6 +43,7 @@ abstract class RefreshIndicator extends StatefulWidget {
 }
 
 /// a widget  implements  pull up load
+/// 定义基本属性
 abstract class LoadIndicator extends StatefulWidget {
   /// load more display style
   final LoadStyle loadStyle;
@@ -130,6 +131,7 @@ abstract class LoadIndicator extends StatefulWidget {
 ///  }
 /// }
 /// ```
+/// 各种状态值的监听 以及滑动监听 位移距离计算
 abstract class RefreshIndicatorState<T extends RefreshIndicator>
     extends State<T>
     with IndicatorStateMixin<T, RefreshStatus>, RefreshProcessor {
@@ -137,7 +139,10 @@ abstract class RefreshIndicatorState<T extends RefreshIndicator>
     return _position.pixels < 0.0;
   }
 
+  /*refresherState.viewportExtent 窗口总大小*/
   double _calculateScrollOffset() {
+    // print("cccccccccccc==== _position?.pixels===${ _position?.pixels}");
+
     return (floating
             ? (mode == RefreshStatus.twoLeveling ||
                     mode == RefreshStatus.twoLevelOpening ||
@@ -150,9 +155,12 @@ abstract class RefreshIndicatorState<T extends RefreshIndicator>
 
   @override
   void _handleOffsetChange() {
-    // TODO: implement _handleOffsetChange
+
+    /*父类实现的一些细节 对这个类号线没啥影响*/
     super._handleOffsetChange();
+    /*todo gy 这里的计算细节？？？？？？？？？*/
     final double overscrollPast = _calculateScrollOffset();
+    // print("cccccccccc===_calculateScrollOffset====$overscrollPast");
     onOffsetChange(overscrollPast);
   }
 
@@ -230,6 +238,7 @@ abstract class RefreshIndicatorState<T extends RefreshIndicator>
     }
   }
 
+  /*监听 各种状态变化 修改内容*/
   void _handleModeChange() {
     if (!mounted) {
       return;
@@ -328,7 +337,7 @@ abstract class RefreshIndicatorState<T extends RefreshIndicator>
   @override
   Widget build(BuildContext context) {
     return SliverRefresh(
-        paintOffsetY: widget.offset,
+        paintOffsetY: widget.offset, /*绘制其实坐标*/
         child: RotatedBox(
           child: buildContent(context, mode),
           quarterTurns: needReverseAll() &&
@@ -625,19 +634,24 @@ mixin IndicatorStateMixin<T extends StatefulWidget, V> on State<T> {
   }
 
   void _updateListener() {
+    /*获取 最近的 RefreshConfiguration 与  SmartRefresher 以及 refresherState*/
     configuration = RefreshConfiguration.of(context);
     refresher = SmartRefresher.of(context);
     refresherState = SmartRefresher.ofState(context);
+    /*todo gy 区分是 刷新 还是加载更多*/
     ValueNotifier<V> newMode = V == RefreshStatus
         ? refresher.controller.headerMode
         : refresher.controller.footerMode;
+    /*找到离自己最近的Scrollable*/
     final ScrollPosition newPosition = Scrollable.of(context).position;
     if (newMode != _mode) {
       _mode?.removeListener(_handleModeChange);
       _mode = newMode;
+      /*注册刷新或者加载更多 状态改变回调*/
       _mode?.addListener(_handleModeChange);
     }
     if (newPosition != _position) {
+      /*注册滑动监听*/
       _position?.removeListener(_handleOffsetChange);
       _onPositionUpdated(newPosition);
       _position = newPosition;
@@ -647,7 +661,7 @@ mixin IndicatorStateMixin<T extends StatefulWidget, V> on State<T> {
 
   @override
   void initState() {
-    // TODO: implement initState
+    /*如果是刷新组件 */
     if (V == RefreshStatus) {
       SmartRefresher.of(context)?.controller?.headerMode?.value =
           RefreshStatus.idle;
@@ -663,6 +677,7 @@ mixin IndicatorStateMixin<T extends StatefulWidget, V> on State<T> {
     super.dispose();
   }
 
+  /*第一次展示会调用*/
   @override
   void didChangeDependencies() {
     // TODO: implement didChangeDependencies
@@ -679,6 +694,7 @@ mixin IndicatorStateMixin<T extends StatefulWidget, V> on State<T> {
     super.didUpdateWidget(oldWidget);
   }
 
+  /*更新 refresher.controller 中的position*/
   void _onPositionUpdated(ScrollPosition newPosition) {
     refresher.controller.onPositionUpdated(newPosition);
   }

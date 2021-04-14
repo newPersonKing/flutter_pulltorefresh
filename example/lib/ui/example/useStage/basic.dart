@@ -162,7 +162,7 @@ class _OnlyListViewState extends State<OnlyListView> {
       key: _refresherKey,
       controller: _refreshController,
       enablePullUp: true,
-      child: buildCtn(),
+      child: buildCtn(), /*这里只是一个listView*/
       physics: BouncingScrollPhysics(),
       footer: ClassicFooter(
         loadStyle: LoadStyle.ShowWhenLoading,

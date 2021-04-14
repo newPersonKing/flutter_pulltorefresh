@@ -129,6 +129,7 @@ class RenderSliverRefresh extends RenderSliverSingleBoxAdapter {
     super.performResize();
   }
 
+  /*todo 这个方法的含义 ？？？？？？*/
   @override
   // TODO: implement centerOffsetAdjustment
   double get centerOffsetAdjustment {
@@ -144,6 +145,7 @@ class RenderSliverRefresh extends RenderSliverSingleBoxAdapter {
     // TODO: implement layout
     if (refreshStyle == RefreshStyle.Front) {
       final RenderViewportBase renderViewport = parent;
+      /*todo gy 设置偏移 滑动距离？？*/
       super.layout(
           (constraints as SliverConstraints)
               .copyWith(overlap: Math.min(0.0, renderViewport.offset.pixels)),
@@ -187,10 +189,12 @@ class RenderSliverRefresh extends RenderSliverSingleBoxAdapter {
     if (_updateFlag) {
       // ignore_for_file: INVALID_USE_OF_PROTECTED_MEMBER
       // ignore_for_file: INVALID_USE_OF_VISIBLE_FOR_TESTING_MEMBER
+      /*todo ScrollActivity 是何方神圣 ？？？？？*/
       Scrollable.of(context).position.activity.applyNewDimensions();
       _updateFlag = false;
     }
     // The new layout extent this sliver should now have.
+    /*_hasLayoutExtent 这个值 是会变化的*/
     final double layoutExtent =
         (_hasLayoutExtent ? 1.0 : 0.0) * _refreshIndicatorExtent;
     // If the new layoutExtent instructive changed, the SliverGeometry's
@@ -206,7 +210,11 @@ class RenderSliverRefresh extends RenderSliverSingleBoxAdapter {
         return;
       }
     }
+
+
     bool active = constraints.overlap < 0.0 || layoutExtent > 0.0;
+
+    /*todo overscrolledExtent 多滑动的位移？？？？*/
     final double overscrolledExtent =
         -(parent as RenderViewportBase).offset.pixels;
     if (refreshStyle == RefreshStyle.Behind) {
@@ -238,19 +246,30 @@ class RenderSliverRefresh extends RenderSliverSingleBoxAdapter {
             0.0,
           ),
           constraints.remainingPaintExtent);
+
+      // print("ccccccccccccccc====_hasLayoutExtent====$_hasLayoutExtent");
+      // print("ccccccccccccccc====refreshStyle====$refreshStyle");
+      // print("ccccccccccccccc====layoutExtent====$layoutExtent");
+      // print("ccccccccccccccc====_refreshIndicatorExtent====$_refreshIndicatorExtent");
+      // print("ccccccccccccccc====layoutExtentOffsetCompensation====$layoutExtentOffsetCompensation");
+      // print("ccccccccccccccc====constraints.overlap====${constraints.overlap}");
+      // print("ccccccccccccccc====constraints.scrollOffset====${constraints.scrollOffset}");
+      // print("ccccccccccccccc====needPaintExtent====${needPaintExtent}");
+      // print("ccccccccccccccc====overscrolledExtent====${overscrolledExtent}");
+      // print("==========================================================");
+      /*https://blog.csdn.net/sinat_17775997/article/details/106695244*/
       switch (refreshStyle) {
         case RefreshStyle.Follow:
           geometry = SliverGeometry(
-            scrollExtent: layoutExtent,
+            scrollExtent: layoutExtent, // sliver 可以滚动的范围，可以认为是 sliver 的高度（如果是 AxisDierction.Down）
             paintOrigin: -boxExtent - constraints.scrollOffset + layoutExtent,
-            paintExtent: needPaintExtent,
+            paintExtent: needPaintExtent, // 绘制范围
             hitTestExtent: needPaintExtent,
-            hasVisualOverflow: overscrolledExtent < boxExtent,
-            maxPaintExtent: needPaintExtent,
+            hasVisualOverflow: overscrolledExtent < boxExtent, /*boxExtent child的高度 或者宽度*/ // 是否需要做clip，免得chidren溢出 整体滑动小于child 高度 需要裁减
+            maxPaintExtent: needPaintExtent, // 最大绘制大小，必须 >= paintExtent
             layoutExtent: Math.min(needPaintExtent,
-                Math.max(layoutExtent - constraints.scrollOffset, 0.0)),
+                Math.max(layoutExtent - constraints.scrollOffset, 0.0)),// 布局范围，当前 sliver 的 top 到下一个 sliver 的 top 的距离，范围是[0,paintExtent],默认是 paintExtent，会影响下一个 sliver 的 layout 位置
           );
-
           break;
         case RefreshStyle.Behind:
           geometry = SliverGeometry(
@@ -507,6 +526,7 @@ class RenderSliverLoading extends RenderSliverSingleBoxAdapter {
   }
 }
 
+/*只是为了生成sliver 所有的滑动都是sliver*/
 class SliverRefreshBody extends SingleChildRenderObjectWidget {
   /// Creates a sliver that contains a single box widget.
   const SliverRefreshBody({
@@ -525,14 +545,19 @@ class RenderSliverRefreshBody extends RenderSliverSingleBoxAdapter {
     RenderBox child,
   }) : super(child: child);
 
+  /*SliverConstraints 描述了 Viewport 和它内部的 Slivers 之间的布局信息*/
   @override
   void performLayout() {
     if (child == null) {
+      /*geometry 当前sliver 占据的高度*/
       geometry = SliverGeometry.zero;
       return;
     }
+    /*parentUsesSize 为true 代表parent 的尺寸信息 依赖于child*/
+    /*作用是 在滚动的方向没有限制*/
     child.layout(constraints.asBoxConstraints(maxExtent: 1111111),
         parentUsesSize: true);
+    /*todo 这里是计算child 高度 ？？？？*/
     double childExtent;
     switch (constraints.axis) {
       case Axis.horizontal:
@@ -543,7 +568,9 @@ class RenderSliverRefreshBody extends RenderSliverSingleBoxAdapter {
         break;
     }
     assert(childExtent != null);
+    /*todo gy 貌似只有这里是自己定义的一些内容*/
     if (childExtent == 1111111) {
+      /*设置为窗口 高度 减去 0.1*/
       child.layout(
           constraints.asBoxConstraints(
               maxExtent: constraints.viewportMainAxisExtent - 0.1),
@@ -557,8 +584,10 @@ class RenderSliverRefreshBody extends RenderSliverSingleBoxAdapter {
         childExtent = child.size.height;
         break;
     }
+    /*计算它的绘制范围*/
     final double paintedChildSize =
         calculatePaintOffset(constraints, from: 0.0, to: childExtent);
+    /*计算它的缓存范围*/
     final double cacheExtent =
         calculateCacheOffset(constraints, from: 0.0, to: childExtent);
 
@@ -575,4 +604,5 @@ class RenderSliverRefreshBody extends RenderSliverSingleBoxAdapter {
     );
     setChildParentData(child, constraints, geometry);
   }
+
 }

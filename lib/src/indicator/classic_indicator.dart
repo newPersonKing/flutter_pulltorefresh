@@ -186,6 +186,7 @@ class _ClassicHeaderState extends RefreshIndicatorState<ClassicHeader> {
 // See also:
 //
 // [ClassicHeader]
+/// 底部加载更多
 class ClassicFooter extends LoadIndicator {
   final String idleText, loadingText, noDataText, failedText, canLoadingText;
 
@@ -249,7 +250,10 @@ class ClassicFooter extends LoadIndicator {
   }
 }
 
+/*只是实现 footer 内容*/
 class _ClassicFooterState extends LoadIndicatorState<ClassicFooter> {
+
+  /*创建显示内容*/
   Widget _buildText(LoadStatus mode) {
     RefreshString strings =
         RefreshLocalizations.of(context)?.currentLocalization ??

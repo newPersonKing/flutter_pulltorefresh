@@ -269,10 +269,12 @@ class SmartRefresher extends StatefulWidget {
         primary = null,
         super(key: key);
 
+  /*向上查找 找到最近的SmartRefresher*/
   static SmartRefresher of(BuildContext context) {
     return context?.findAncestorWidgetOfExactType<SmartRefresher>();
   }
 
+  /*向上查找 找到最近的 SmartRefresherState*/
   static SmartRefresherState ofState(BuildContext context) {
     return context?.findAncestorStateOfType<SmartRefresherState>();
   }
@@ -290,20 +292,25 @@ class SmartRefresherState extends State<SmartRefresher> {
   double viewportExtent = 0;
   bool _canDrag = true;
 
+  /*初始化顶部指示器*/
   final RefreshIndicator defaultHeader =
       defaultTargetPlatform == TargetPlatform.iOS
           ? ClassicHeader()
           : MaterialClassicHeader();
 
+  /*初始化底部指示器*/
   final LoadIndicator defaultFooter = ClassicFooter();
 
   //build slivers from child Widget
+  // todo gy 生成所有可能展示的slivers
   List<Widget> _buildSliversByChild(
       BuildContext context, Widget child, RefreshConfiguration configuration) {
     List<Widget> slivers;
     if (child is ScrollView) {
       if (child is BoxScrollView) {
+        /*listView GridView StaggeredGridView 都是 BoxScrollView*/
         //avoid system inject padding when own indicator top or bottom
+        // 避免系统注入padding todo 我们都知道 直接使用listView 等等 系统默认会添加一个padding 不知道 是不是说的这个padding
         Widget sliver = child.buildChildLayout(context);
         if (child.padding != null) {
           slivers = [SliverPadding(sliver: sliver, padding: child.padding)];
@@ -311,16 +318,20 @@ class SmartRefresherState extends State<SmartRefresher> {
           slivers = [sliver];
         }
       } else {
+        /*CustomScrollView 就是直接继承 ScrollView*/
         slivers = List.from(child.buildSlivers(context), growable: true);
       }
     } else if (child is! Scrollable) {
       slivers = [
+        /*如果 child 不是sliver 那么包裹到sliver*/
         SliverRefreshBody(
           child: child ?? Container(),
         )
       ];
     }
+    /*todo widget.enableTwoLevel 代表可以拥有二级列表吗？？？？？*/
     if (widget.enablePullDown || widget.enableTwoLevel) {
+      /*添加header 到 slivers 集合中*/
       slivers?.insert(
           0,
           widget.header ??
@@ -330,6 +341,7 @@ class SmartRefresherState extends State<SmartRefresher> {
               defaultHeader);
     }
     //insert header or footer
+    //添加 footer 到slivers中
     if (widget.enablePullUp) {
       slivers?.add(widget.footer ??
           (configuration?.footerBuilder != null
@@ -348,7 +360,8 @@ class SmartRefresherState extends State<SmartRefresher> {
             ScrollConfiguration.of(context)
                     ?.getScrollPhysics(context)
                     .runtimeType ==
-                BouncingScrollPhysics);
+                BouncingScrollPhysics);/*todo gy 后面这个判断待 研究？？？？？*/
+    /*定义自己的Physics todo 刷新效果可能就是在这里实现的 */
     return _physics = RefreshPhysics(
             dragSpeedRatio: conf?.dragSpeedRatio ?? 1,
             springDescription: conf?.springDescription ??
@@ -397,6 +410,7 @@ class SmartRefresherState extends State<SmartRefresher> {
       Clip clipBehavior;
 
       if (childView is ScrollView) {
+        /*这里应该都是ScrollView 的属性 暂时不看*/
         primary = primary ?? childView.primary;
         cacheExtent = cacheExtent ?? childView.cacheExtent;
         key = key ?? childView.key;
@@ -413,15 +427,17 @@ class SmartRefresherState extends State<SmartRefresher> {
         clipBehavior = clipBehavior ?? childView.clipBehavior;
         scrollController = scrollController ?? childView.controller;
 
+        /*widget.controller 持有 ScrollView 的controller*/
         // ignore: DEPRECATED_MEMBER_USE_FROM_SAME_PACKAGE
         widget.controller.scrollController = scrollController ??
             childView.controller ??
-            (childView.primary ? PrimaryScrollController.of(context) : null);
+            (childView.primary ? PrimaryScrollController.of(context) : null); /*如果没有设置 返回离得最近的scrollController*/
       } else {
         // ignore: DEPRECATED_MEMBER_USE_FROM_SAME_PACKAGE
         widget.controller.scrollController =
             PrimaryScrollController.of(context);
       }
+      /*如果不是 Scrollable那么嵌套为 CustomScrollView*/
       body = CustomScrollView(
         // ignore: DEPRECATED_MEMBER_USE_FROM_SAME_PACKAGE
         controller: scrollController,
@@ -545,6 +561,7 @@ class SmartRefresherState extends State<SmartRefresher> {
 
   @override
   Widget build(BuildContext context) {
+    /*往上找到最外层的 RefreshConfiguration*/
     final RefreshConfiguration configuration = RefreshConfiguration.of(context);
     Widget body;
     if (widget.builder != null)
@@ -628,6 +645,7 @@ class RefreshController {
   }
 
   void _detachPosition() {
+    /*isScrollingNotifier 监听scroll 是否是在滑动*/
     position?.isScrollingNotifier?.removeListener(_listenScrollEnd);
   }
 
@@ -672,7 +690,9 @@ class RefreshController {
     StatefulElement indicatorElement =
         _findIndicator(position.context.storageContext, RefreshIndicator);
     if (indicatorElement == null) return null;
+    /*修改 floating 属性*/
     (indicatorElement.state as RefreshIndicatorState)?.floating = true;
+   /*禁止滑动*/
     if (needMove)
       SmartRefresher.ofState(position.context.storageContext)
           ?.setCanDrag(false);
