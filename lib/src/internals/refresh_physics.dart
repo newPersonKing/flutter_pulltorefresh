@@ -133,27 +133,27 @@ class RefreshPhysics extends ScrollPhysics {
       }
     }
     // print("cccccccccccc====applyPhysicsToUserOffset==offset===${offset}");
-    // print("ccccccccccc===applyPhysicsToUserOffset==position.outOfRange====${position.outOfRange}");
+    print("ccccccccccc===applyPhysicsToUserOffset==position.outOfRange====${position.outOfRange}");
     // print("ccccccccccc===applyPhysicsToUserOffset==position.minScrollExtent====${position.minScrollExtent}");
     // print("ccccccccccc===applyPhysicsToUserOffset==controller.headerMode.value====${controller.headerMode.value}");
     // print("ccccccccccc===applyPhysicsToUserOffset==position.pixels====${position.pixels}");
     // print("=============================================================");
-    /*一般刷新 都会走这里*/
+    /*一般刷新 都会走这里  第一次下滑 position.outOfRange 为false 第二次在进入这个方法 position.outOfRange会变成 true*/
     if (position.outOfRange ||
         controller.headerMode.value == RefreshStatus.twoLeveling) {
       /*todo position.minScrollExtent 这个值正常情况下是 0 */
       final double overscrollPastStart =
-          math.max(position.minScrollExtent - position.pixels, 0.0);
+          math.max(position.minScrollExtent - position.pixels, 0.0);/*下拉的时候 这里返回是下拉的距离*/
       final double overscrollPastEnd = math.max(
           position.pixels -
               (controller.headerMode.value == RefreshStatus.twoLeveling
                   ? 0.0
                   : position.maxScrollExtent),
-          0.0);
+          0.0); /*下拉的时候 这里返回的是0*/
       final double overscrollPast =
-          math.max(overscrollPastStart, overscrollPastEnd);
+          math.max(overscrollPastStart, overscrollPastEnd); /*下拉 返回的是 overscrollPastStart*/
       final bool easing = (overscrollPastStart > 0.0 && offset < 0.0) ||
-          (overscrollPastEnd > 0.0 && offset > 0.0);
+          (overscrollPastEnd > 0.0 && offset > 0.0); /*下拉 符合第一个条件*/
 
       /*这里计算 位移 展示有阻力的感觉*/
       final double friction = easing
@@ -162,10 +162,13 @@ class RefreshPhysics extends ScrollPhysics {
               (overscrollPast - offset.abs()) / position.viewportDimension)
           : frictionFactor(overscrollPast / position.viewportDimension);
       final double direction = offset.sign;
+
+      /*下拉到一定程度 拽不动 就是这里的算法*/
       return direction *
           _applyFriction(overscrollPast, offset.abs(), friction) *
           (dragSpeedRatio ?? 1.0);
     }
+
     return super.applyPhysicsToUserOffset(position, offset);
   }
 
@@ -273,9 +276,9 @@ class RefreshPhysics extends ScrollPhysics {
       return value - bottomBoundary;
     }
 
-    print("applyBoundaryConditions=====scrollPosition.activity=====${scrollPosition.activity}");
-    print("applyBoundaryConditions=====maxOverScrollExtent=====${maxOverScrollExtent}");
-    print("applyBoundaryConditions=====maxUnderScrollExtent=====${maxUnderScrollExtent}");
+    // print("applyBoundaryConditions=====scrollPosition.activity=====${scrollPosition.activity}");
+    // print("applyBoundaryConditions=====maxOverScrollExtent=====${maxOverScrollExtent}");
+    // print("applyBoundaryConditions=====maxUnderScrollExtent=====${maxUnderScrollExtent}");
     // check user is dragging,it is import,some devices may not bounce with different frame and time,bouncing return the different velocity
     if (scrollPosition.activity is DragScrollActivity) {
       if (maxOverScrollExtent != double.infinity &&
@@ -287,7 +290,8 @@ class RefreshPhysics extends ScrollPhysics {
           position.pixels < value) // overscroll  bottomBoundary <= position.pixels 代表还没达到自己的边界 position.pixels < value 代表是向上滑动
         return value - position.pixels;
     }
-    print("applyBoundaryConditions=====result");
+
+    /*正常返回的是这里*/
     return 0.0;
   }
 

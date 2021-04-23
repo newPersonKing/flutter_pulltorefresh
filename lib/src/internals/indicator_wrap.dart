@@ -141,7 +141,6 @@ abstract class RefreshIndicatorState<T extends RefreshIndicator>
 
   /*refresherState.viewportExtent 窗口总大小*/
   double _calculateScrollOffset() {
-    // print("cccccccccccc==== _position?.pixels===${ _position?.pixels}");
 
     return (floating
             ? (mode == RefreshStatus.twoLeveling ||
@@ -161,6 +160,8 @@ abstract class RefreshIndicatorState<T extends RefreshIndicator>
     /*todo gy 这里的计算细节？？？？？？？？？*/
     final double overscrollPast = _calculateScrollOffset();
     // print("cccccccccc===_calculateScrollOffset====$overscrollPast");
+
+    /*_ClassicHeaderState 没有处理这个方法*/
     onOffsetChange(overscrollPast);
   }
 
@@ -194,8 +195,12 @@ abstract class RefreshIndicatorState<T extends RefreshIndicator>
     if ((configuration.enableBallisticRefresh && activity.velocity < 0.0) ||
         activity is DragScrollActivity ||
         activity is DrivenScrollActivity) {
+      // print("ccccccccccccccccc====configuration.headerTriggerDistance===${configuration.headerTriggerDistance}");
+      // print("ccccccccccccccccc====offset===${offset}");
       if (refresher.enablePullDown &&
           offset >= configuration.headerTriggerDistance) {
+        /*滑动距离 达到设置的阈值 修改状态*/
+        // print("ccccccccccccccccccc===configuration.skipCanRefresh===${configuration.skipCanRefresh}");
         if (!configuration.skipCanRefresh) {
           mode = RefreshStatus.canRefresh;
         } else {
@@ -216,7 +221,7 @@ abstract class RefreshIndicatorState<T extends RefreshIndicator>
         mode = RefreshStatus.idle;
       }
     }
-    //mostly for spring back
+    //mostly for spring back 当手指抬起的时候 会 回调这里
     else if (activity is BallisticScrollActivity) {
       if (RefreshStatus.canRefresh == mode) {
         // refreshing
@@ -244,6 +249,7 @@ abstract class RefreshIndicatorState<T extends RefreshIndicator>
       return;
     }
     update();
+    print("==================================================cccccccccccccccccc====mode====${mode}");
     if (mode == RefreshStatus.idle || mode == RefreshStatus.canRefresh) {
       floating = false;
 
@@ -256,6 +262,7 @@ abstract class RefreshIndicatorState<T extends RefreshIndicator>
         if (!mounted) return;
         floating = false;
         if (mode == RefreshStatus.completed || mode == RefreshStatus.failed) {
+          /*这里会触发 smartRefresh 重新build 所以会产生刷新上移的视觉*/
           refresherState
               .setCanDrag(configuration.enableScrollWhenRefreshCompleted);
         }
@@ -620,6 +627,8 @@ mixin IndicatorStateMixin<T extends StatefulWidget, V> on State<T> {
     if (overscrollPast < 0.0) {
       return;
     }
+
+    /*自定义refresher 监听 位移变化*/
     if (refresher.onOffsetChange != null) {
       refresher.onOffsetChange(V == RefreshStatus, overscrollPast);
     }

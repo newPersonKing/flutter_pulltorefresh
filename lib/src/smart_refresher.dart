@@ -684,6 +684,7 @@ class RefreshController {
       {bool needMove: true,
       Duration duration: const Duration(milliseconds: 500),
       Curve curve: Curves.linear}) {
+    print("==========================================ccccccccccccccccccccc===requestRefresh");
     assert(position != null,
         'Try not to call requestRefresh() before build,please call after the ui was rendered');
     if (isRefresh) return Future.value();

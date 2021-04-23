@@ -152,7 +152,6 @@ class _ClassicHeaderState extends RefreshIndicatorState<ClassicHeader> {
 
   @override
   Widget buildContent(BuildContext context, RefreshStatus mode) {
-    // TODO: implement buildContent
     Widget textWidget = _buildText(mode);
     Widget iconWidget = _buildIcon(mode);
     List<Widget> children = <Widget>[iconWidget, textWidget];

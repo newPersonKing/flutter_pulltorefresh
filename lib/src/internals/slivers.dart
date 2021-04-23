@@ -228,6 +228,7 @@ class RenderSliverRefresh extends RenderSliverSingleBoxAdapter {
         constraints.asBoxConstraints(),
         parentUsesSize: true,
       );
+    // print("cccccccccccccccccccc====constraints===${constraints.asBoxConstraints()}");
     final double boxExtent = (constraints.axisDirection == AxisDirection.up ||
             constraints.axisDirection == AxisDirection.down)
         ? child.size.height
@@ -256,19 +257,39 @@ class RenderSliverRefresh extends RenderSliverSingleBoxAdapter {
       // print("ccccccccccccccc====constraints.scrollOffset====${constraints.scrollOffset}");
       // print("ccccccccccccccc====needPaintExtent====${needPaintExtent}");
       // print("ccccccccccccccc====overscrolledExtent====${overscrolledExtent}");
-      // print("==========================================================");
+      // print("ccccccccccccccc====boxExtent====${boxExtent}");
+      print("==========================================================");
       /*https://blog.csdn.net/sinat_17775997/article/details/106695244*/
+
+      /**
+       * ClassicHeader 的默认 refreshStyle 是 RefreshStyle.Follow
+       *
+       * constraints.scrollOffset 代表 sliver 划出窗口的高度
+       */
+      /**
+       * 如果 layoutExtent 为0 那么 第一个item top 与 第二个item top重合
+       * paintOrigin 设置为 -boxExtent 那么就刚好处于列表顶部
+       */
       switch (refreshStyle) {
         case RefreshStyle.Follow:
+        /**
+         * 这种模式下 layoutExtent = 0
+         * constraints.scrollOffset 为0
+         * needPaintExtent 为固定值
+         * boxExtent 为固定值 这里等于 needPaintExtent 都是60
+         * overscrolledExtent 手指下拉距离 最大到120
+         *
+         * 这种模式下 单纯的就是 把header 绘制在屏幕外部
+         */
           geometry = SliverGeometry(
-            scrollExtent: layoutExtent, // sliver 可以滚动的范围，可以认为是 sliver 的高度（如果是 AxisDierction.Down）
-            paintOrigin: -boxExtent - constraints.scrollOffset + layoutExtent,
-            paintExtent: needPaintExtent, // 绘制范围
-            hitTestExtent: needPaintExtent,
+            scrollExtent: layoutExtent, //0 sliver 可以滚动的范围，可以认为是 sliver 的高度（如果是 AxisDierction.Down）
+            paintOrigin: -boxExtent - constraints.scrollOffset + layoutExtent,//-60
+            paintExtent: needPaintExtent, //60 绘制范围
+            hitTestExtent: needPaintExtent,// 60
             hasVisualOverflow: overscrolledExtent < boxExtent, /*boxExtent child的高度 或者宽度*/ // 是否需要做clip，免得chidren溢出 整体滑动小于child 高度 需要裁减
-            maxPaintExtent: needPaintExtent, // 最大绘制大小，必须 >= paintExtent
+            maxPaintExtent: needPaintExtent, //60  最大绘制大小，必须 >= paintExtent
             layoutExtent: Math.min(needPaintExtent,
-                Math.max(layoutExtent - constraints.scrollOffset, 0.0)),// 布局范围，当前 sliver 的 top 到下一个 sliver 的 top 的距离，范围是[0,paintExtent],默认是 paintExtent，会影响下一个 sliver 的 layout 位置
+                Math.max(layoutExtent - constraints.scrollOffset, 0.0)),//0 布局范围，当前 sliver 的 top 到下一个 sliver 的 top 的距离，范围是[0,paintExtent],默认是 paintExtent，会影响下一个 sliver 的 layout 位置
           );
           break;
         case RefreshStyle.Behind:
